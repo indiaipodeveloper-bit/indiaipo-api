@@ -1303,22 +1303,11 @@ app.use(
     '/api/upload/weekly-reporter',
     uploadWeeklyReporterRoutes
 );
-// ============================================================
-// SITEMAP — Split into Index + Sub-sitemaps
-// Physical files saved to server/public/ for visibility
-// Auto-regenerates when blogs/news are added/updated
-// ============================================================
 
-/**
- * generateAndSaveSitemaps()
- * Generates 3 XML sitemap files and writes them to server/public/:
- *   - sitemap.xml          → Sitemap Index (references sub-sitemaps + static/service/ipo/etc URLs)
- *   - ipo-blogs-sitemap.xml → All /ipo-blogs/ URLs
- *   - news-sitemap.xml     → All /news/detail/ URLs
- */
+
 export async function generateAndSaveSitemaps() {
     try {
-        const baseUrl = process.env.SITE_URL || 'https://www.indiaipo.in';
+        const baseUrl = 'https://www.indiaipo.in';
         const today = new Date().toISOString().split('T')[0];
 
         const fmt = (d) => { if (!d) return today; const dt = new Date(d); return isNaN(dt.getTime()) ? today : dt.toISOString().split('T')[0]; };

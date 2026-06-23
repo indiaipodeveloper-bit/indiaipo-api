@@ -77,15 +77,15 @@ dotenv.config({ path: path.join(__dirname, '../.env') });
 const app = express();
 app.set('trust proxy', 1);
 
-app.use((req, res, next) => {
-    const host = req.headers.host;
+// app.use((req, res, next) => {
+//     const host = req.headers.host;
 
-    if (host === 'indiaipo.in') {
-        return res.redirect(301, `https://www.indiaipo.in${req.originalUrl}`);
-    }
+//     if (host === 'indiaipo.in') {
+//         return res.redirect(301, `https://.indiaipo.in${req.originalUrl}`);
+//     }
 
-    next();
-});
+//     next();
+// });
 const PORT = process.env.PORT || 5000;
 
 

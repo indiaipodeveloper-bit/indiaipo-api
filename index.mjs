@@ -1427,7 +1427,7 @@ export async function generateAndSaveSitemaps() {
         regularBlogs.forEach(blog => { if (blog.slug) pagesXml += urlEntry(`${baseUrl}/blog/${blog.slug}`, fmt(blog.updated_at), 'weekly', '0.7'); });
         registrars.forEach(r => { if (r.slug) pagesXml += urlEntry(`${baseUrl}/ipo-registrar-list/${r.slug}`, fmt(r.update_at), 'monthly', '0.7'); });
         consultants.forEach(c => { if (c.slug) pagesXml += urlEntry(`${baseUrl}/consultant/${c.slug}`, fmt(c.updated_at), 'monthly', '0.6'); });
-        ipoDetails.forEach(ipo => { pagesXml += urlEntry(`${baseUrl}/ipo/${ipo.id}`, fmt(ipo.updated_at), 'weekly', '0.85'); });
+        ipoDetails.forEach(ipo => { pagesXml += urlEntry(`${baseUrl}/all-ipos/${ipo.id}`, fmt(ipo.updated_at), 'weekly', '0.85'); });
         sectorPages.forEach(sector => { const s = toSlug(sector.name); if (s) pagesXml += urlEntry(`${baseUrl}/sector/${s}`, fmt(sector.updated_at), 'weekly', '0.75'); });
         merchantBankers.forEach(mb => { if (mb.slug) pagesXml += urlEntry(`${baseUrl}/merchant-banker/${mb.slug}`, fmt(mb.updated_at), 'monthly', '0.6'); });
         pagesXml += `</urlset>`;

@@ -122,7 +122,7 @@ router.get("/", async (req, res) => {
 
       const processedData = data.map(item => {
         const processed = { ...item };
-        const excludeFromZero = ['logo', 'blog_image', 'blog_slug', 'sector_name', 'sector_names', 'issuer_company', 'status', 'issue_category', 'date_declared', 'open_date', 'close_date', 'listing_date', 'merchant_bankers', 'exchange'];
+        const excludeFromZero = ['logo', 'blog_image', 'blog_slug', 'sector_name', 'sector_names', 'issuer_company', 'status', 'issue_category', 'date_declared', 'open_date', 'close_date', 'listing_date', 'merchant_bankers', 'exchange', 'ipo_subscription'];
 
         Object.keys(processed).forEach(key => {
           if (processed[key] === null && !excludeFromZero.includes(key)) {
@@ -155,7 +155,8 @@ router.get("/", async (req, res) => {
              GROUP_CONCAT(DISTINCT isl.sector_id) AS sector_ids,
              b.image AS blog_image,
              b.gmp AS gmp_history,
-             COALESCE(NULLIF(b.new_slug, ''), b.slug) as blog_slug
+             COALESCE(NULLIF(b.new_slug, ''), b.slug) as blog_slug,
+             b.ipo_subscription AS ipo_subscription
       FROM ipo_lists i 
       LEFT JOIN ipo_sector_links isl ON i.id = isl.ipo_id
       LEFT JOIN sectors s ON isl.sector_id = s.id
@@ -304,7 +305,7 @@ router.get("/", async (req, res) => {
     // Map nulls (only for numeric indicators, keep paths/slugs as null or empty)
     const processedData = data.map(item => {
       const processed = { ...item };
-      const excludeFromZero = ['logo', 'blog_image', 'blog_slug', 'sector_name', 'sector_names', 'issuer_company', 'status', 'issue_category', 'date_declared', 'open_date', 'close_date', 'listing_date', 'merchant_bankers', 'exchange'];
+      const excludeFromZero = ['logo', 'blog_image', 'blog_slug', 'sector_name', 'sector_names', 'issuer_company', 'status', 'issue_category', 'date_declared', 'open_date', 'close_date', 'listing_date', 'merchant_bankers', 'exchange', 'ipo_subscription'];
 
       Object.keys(processed).forEach(key => {
         if (processed[key] === null && !excludeFromZero.includes(key)) {
@@ -367,7 +368,7 @@ router.post("/", async (req, res) => {
       listing_date, merchant_bankers, issue_lowest_price, issue_highest_price,
       issue_size, lot_size, exchange, gmp, issue_category, sector_id,
       merchant_banker, current_price, ipo_pe_ratio, listing_day_close_bse,
-      listing_day_close_nse, status, upcoming, confidential,
+      listing_day_close_nse, listing_day_open_bse, listing_day_open_nse, status, upcoming, confidential,
       upcoming_ipo_status, admin_blog_id, sector_ids
     } = req.body;
 
@@ -479,6 +480,12 @@ router.post("/", async (req, res) => {
     listing_day_close_nse = Number(listing_day_close_nse);
     if (isNaN(listing_day_close_nse)) listing_day_close_nse = 0;
 
+    listing_day_open_bse = Number(listing_day_open_bse);
+    if (isNaN(listing_day_open_bse)) listing_day_open_bse = 0;
+
+    listing_day_open_nse = Number(listing_day_open_nse);
+    if (isNaN(listing_day_open_nse)) listing_day_open_nse = 0;
+
     // Sanitize sector_ids and sector_id
     const clean_sector_id = (sector_id && Number(sector_id) !== 0) ? Number(sector_id) : null;
     let clean_sector_ids = [];
@@ -500,7 +507,7 @@ router.post("/", async (req, res) => {
       'listing_date', 'merchant_bankers', 'issue_lowest_price', 'issue_highest_price',
       'issue_size', 'lot_size', 'exchange', 'gmp', 'issue_category', 'sector_id',
       'merchant_banker', 'current_price', 'ipo_pe_ratio', 'listing_day_close_bse',
-      'listing_day_close_nse', 'status', 'upcoming', 'confidential',
+      'listing_day_close_nse', 'listing_day_open_bse', 'listing_day_open_nse', 'status', 'upcoming', 'confidential',
       'upcoming_ipo_status', 'admin_blog_id'
     ];
 
@@ -525,6 +532,8 @@ router.post("/", async (req, res) => {
       ipo_pe_ratio || null,
       listing_day_close_bse || 0,
       listing_day_close_nse || 0,
+      listing_day_open_bse || 0,
+      listing_day_open_nse || 0,
       status || 'Active',
       upcoming || '0',
       confidential || '0',
@@ -568,7 +577,7 @@ router.put("/:id", async (req, res) => {
       listing_date, merchant_bankers, issue_lowest_price, issue_highest_price,
       issue_size, lot_size, exchange, gmp, issue_category, sector_id,
       merchant_banker, current_price, ipo_pe_ratio, listing_day_close_bse,
-      listing_day_close_nse, status, upcoming, confidential,
+      listing_day_close_nse, listing_day_open_bse, listing_day_open_nse, status, upcoming, confidential,
       upcoming_ipo_status, admin_blog_id, sector_ids
     } = req.body;
 
@@ -708,6 +717,12 @@ router.put("/:id", async (req, res) => {
     listing_day_close_nse = Number(listing_day_close_nse);
     if (isNaN(listing_day_close_nse)) listing_day_close_nse = 0;
 
+    listing_day_open_bse = Number(listing_day_open_bse);
+    if (isNaN(listing_day_open_bse)) listing_day_open_bse = 0;
+
+    listing_day_open_nse = Number(listing_day_open_nse);
+    if (isNaN(listing_day_open_nse)) listing_day_open_nse = 0;
+
     // =========================
     // ✅ ENUM VALIDATION
     // =========================
@@ -766,6 +781,8 @@ router.put("/:id", async (req, res) => {
       ipo_pe_ratio: ipo_pe_ratio || null,
       listing_day_close_bse: listing_day_close_bse || 0,
       listing_day_close_nse: listing_day_close_nse || 0,
+      listing_day_open_bse: listing_day_open_bse || 0,
+      listing_day_open_nse: listing_day_open_nse || 0,
       status: status || "Active",
       upcoming: upcoming || "0",
       confidential: confidential || "0",

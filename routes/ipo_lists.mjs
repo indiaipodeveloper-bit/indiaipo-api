@@ -38,8 +38,8 @@ router.get("/", async (req, res) => {
     if (admin === "true") {
       limit = Math.min(limitInput, 1000);
     } else {
-      if (limitInput > 20) {
-        limit = 20;
+      if (limitInput > 500) {
+        limit = 500;
       } else {
         limit = limitInput;
       }
@@ -55,23 +55,74 @@ router.get("/", async (req, res) => {
     const admin_blog_id = req.query.admin_blog_id || "";
 
     if (by_sector === "true") {
+      const combinedSubquery = `
+        SELECT 
+          CAST(i.id AS UNSIGNED) as id,
+          CAST(i.issuer_company AS CHAR) COLLATE utf8mb4_general_ci as issuer_company,
+          CAST(i.issue_category AS CHAR) COLLATE utf8mb4_general_ci as issue_category,
+          CAST(i.issue_size AS CHAR) COLLATE utf8mb4_general_ci as issue_size,
+          CAST(i.ipo_pe_ratio AS CHAR) COLLATE utf8mb4_general_ci as ipo_pe_ratio,
+          i.open_date as open_date,
+          CAST(i.admin_blog_id AS UNSIGNED) as admin_blog_id,
+          CAST(i.status AS CHAR) COLLATE utf8mb4_general_ci as status,
+          CAST(s_link.id AS UNSIGNED) as sector_id
+        FROM ipo_lists i
+        JOIN ipo_sector_links isl ON i.id = isl.ipo_id
+        JOIN sectors s_link ON isl.sector_id = s_link.id
+
+        UNION ALL
+
+        SELECT 
+          CAST(i.id AS UNSIGNED) as id,
+          CAST(i.issuer_company AS CHAR) COLLATE utf8mb4_general_ci as issuer_company,
+          CAST(i.issue_category AS CHAR) COLLATE utf8mb4_general_ci as issue_category,
+          CAST(i.issue_size AS CHAR) COLLATE utf8mb4_general_ci as issue_size,
+          CAST(i.ipo_pe_ratio AS CHAR) COLLATE utf8mb4_general_ci as ipo_pe_ratio,
+          i.open_date as open_date,
+          CAST(i.admin_blog_id AS UNSIGNED) as admin_blog_id,
+          CAST(i.status AS CHAR) COLLATE utf8mb4_general_ci as status,
+          CAST(s_link.id AS UNSIGNED) as sector_id
+        FROM ipo_lists i
+        JOIN sectors s_link ON i.sector_id = s_link.id
+        LEFT JOIN ipo_sector_links isl ON i.id = isl.ipo_id
+        WHERE isl.ipo_id IS NULL
+
+        UNION ALL
+
+        SELECT 
+          CAST(i.id AS UNSIGNED) as id,
+          CAST(i.name AS CHAR) COLLATE utf8mb4_general_ci as issuer_company,
+          CAST(i.type AS CHAR) COLLATE utf8mb4_general_ci as issue_category,
+          CAST(i.iposize AS CHAR) COLLATE utf8mb4_general_ci as issue_size,
+          CAST(i.pe_ratio AS CHAR) COLLATE utf8mb4_general_ci as ipo_pe_ratio,
+          i.ipo_year as open_date,
+          CAST(i.admin_blog_id AS UNSIGNED) as admin_blog_id,
+          CAST(i.status AS CHAR) COLLATE utf8mb4_general_ci as status,
+          CAST(i.sector_id AS UNSIGNED) as sector_id
+        FROM sector_by_ipo i
+        WHERE NOT EXISTS (
+          SELECT 1 FROM ipo_lists il 
+          WHERE (LOWER(TRIM(il.issuer_company)) COLLATE utf8mb4_general_ci) = (LOWER(TRIM(i.name)) COLLATE utf8mb4_general_ci)
+        )
+      `;
+
       let countQuery = `
         SELECT COUNT(DISTINCT i.id) as total 
-        FROM sector_by_ipo i
+        FROM (${combinedSubquery}) i
         LEFT JOIN sectors s ON i.sector_id = s.id
       `;
       let dataQuery = `
         SELECT i.id,
-               i.name AS issuer_company,
-               i.type AS issue_category,
-               i.iposize AS issue_size,
-               i.pe_ratio AS ipo_pe_ratio,
-               i.ipo_year AS open_date,
+               i.issuer_company,
+               i.issue_category,
+               i.issue_size,
+               i.ipo_pe_ratio,
+               i.open_date,
                i.admin_blog_id,
                s.name AS sector_name,
                s.name AS sector_names,
                COALESCE(NULLIF(b.new_slug, ''), b.slug) as blog_slug
-        FROM sector_by_ipo i
+        FROM (${combinedSubquery}) i
         LEFT JOIN sectors s ON i.sector_id = s.id
         LEFT JOIN admin_blogs b ON i.admin_blog_id = b.id
       `;
@@ -89,12 +140,12 @@ router.get("/", async (req, res) => {
       }
 
       if (search) {
-        whereClauses.push("i.name LIKE ?");
+        whereClauses.push("i.issuer_company LIKE ?");
         queryParams.push(`%${search}%`);
       }
 
       if (category) {
-        whereClauses.push("LOWER(i.type) = LOWER(?)");
+        whereClauses.push("LOWER(i.issue_category) = LOWER(?)");
         queryParams.push(category);
       }
 
@@ -106,11 +157,11 @@ router.get("/", async (req, res) => {
         dataQuery += whereString;
       }
 
-      let orderBySql = " ORDER BY s.name ASC, i.name ASC";
+      let orderBySql = " ORDER BY s.name ASC, i.issuer_company ASC";
       const orderParams = [];
       if (sectorsList.length > 0) {
         const fieldPlaceholders = sectorsList.map(() => "?").join(",");
-        orderBySql = ` ORDER BY FIELD(s.name, ${fieldPlaceholders}) = 0 ASC, FIELD(s.name, ${fieldPlaceholders}) ASC, i.name ASC`;
+        orderBySql = ` ORDER BY FIELD(s.name, ${fieldPlaceholders}) = 0 ASC, FIELD(s.name, ${fieldPlaceholders}) ASC, i.issuer_company ASC`;
         orderParams.push(...sectorsList, ...sectorsList);
       }
 

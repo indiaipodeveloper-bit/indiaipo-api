@@ -10,11 +10,45 @@ router.get("/", async (req, res) => {
     let query = `
       SELECT 
         s.*,
-        COUNT(CASE WHEN LOWER(i.type) = 'mainline' THEN 1 END) as mainline_count,
-        COUNT(CASE WHEN LOWER(i.type) = 'sme' THEN 1 END) as sme_count,
+        COUNT(CASE WHEN LOWER(i.issue_category) IN ('mainline', 'mainboard') THEN 1 END) as mainline_count,
+        COUNT(CASE WHEN LOWER(i.issue_category) = 'sme' THEN 1 END) as sme_count,
         COUNT(i.id) as total_count
       FROM sectors s
-      LEFT JOIN sector_by_ipo i ON s.id = i.sector_id
+      LEFT JOIN (
+        SELECT 
+          CAST(i.id AS UNSIGNED) as id, 
+          CAST(i.issue_category AS CHAR) COLLATE utf8mb4_general_ci as issue_category, 
+          CAST(i.status AS CHAR) COLLATE utf8mb4_general_ci as status, 
+          CAST(s_link.id AS UNSIGNED) as sector_id
+        FROM ipo_lists i
+        JOIN ipo_sector_links isl ON i.id = isl.ipo_id
+        JOIN sectors s_link ON isl.sector_id = s_link.id
+
+        UNION ALL
+
+        SELECT 
+          CAST(i.id AS UNSIGNED) as id, 
+          CAST(i.issue_category AS CHAR) COLLATE utf8mb4_general_ci as issue_category, 
+          CAST(i.status AS CHAR) COLLATE utf8mb4_general_ci as status, 
+          CAST(s_link.id AS UNSIGNED) as sector_id
+        FROM ipo_lists i
+        JOIN sectors s_link ON i.sector_id = s_link.id
+        LEFT JOIN ipo_sector_links isl ON i.id = isl.ipo_id
+        WHERE isl.ipo_id IS NULL
+
+        UNION ALL
+
+        SELECT 
+          CAST(i.id AS UNSIGNED) as id, 
+          CAST(i.type AS CHAR) COLLATE utf8mb4_general_ci as issue_category, 
+          CAST(i.status AS CHAR) COLLATE utf8mb4_general_ci as status, 
+          CAST(i.sector_id AS UNSIGNED) as sector_id
+        FROM sector_by_ipo i
+        WHERE NOT EXISTS (
+          SELECT 1 FROM ipo_lists il 
+          WHERE (LOWER(TRIM(il.issuer_company)) COLLATE utf8mb4_general_ci) = (LOWER(TRIM(i.name)) COLLATE utf8mb4_general_ci)
+        )
+      ) i ON s.id = i.sector_id AND i.status = 'Active'
       WHERE s.status = 'Active'
     `;
     const params = [];
@@ -45,11 +79,45 @@ router.get("/admin", async (req, res) => {
     let query = `
       SELECT 
         s.*,
-        COUNT(CASE WHEN LOWER(i.type) = 'mainline' THEN 1 END) as mainline_count,
-        COUNT(CASE WHEN LOWER(i.type) = 'sme' THEN 1 END) as sme_count,
+        COUNT(CASE WHEN LOWER(i.issue_category) IN ('mainline', 'mainboard') THEN 1 END) as mainline_count,
+        COUNT(CASE WHEN LOWER(i.issue_category) = 'sme' THEN 1 END) as sme_count,
         COUNT(i.id) as total_count
       FROM sectors s
-      LEFT JOIN sector_by_ipo i ON s.id = i.sector_id
+      LEFT JOIN (
+        SELECT 
+          CAST(i.id AS UNSIGNED) as id, 
+          CAST(i.issue_category AS CHAR) COLLATE utf8mb4_general_ci as issue_category, 
+          CAST(i.status AS CHAR) COLLATE utf8mb4_general_ci as status, 
+          CAST(s_link.id AS UNSIGNED) as sector_id
+        FROM ipo_lists i
+        JOIN ipo_sector_links isl ON i.id = isl.ipo_id
+        JOIN sectors s_link ON isl.sector_id = s_link.id
+
+        UNION ALL
+
+        SELECT 
+          CAST(i.id AS UNSIGNED) as id, 
+          CAST(i.issue_category AS CHAR) COLLATE utf8mb4_general_ci as issue_category, 
+          CAST(i.status AS CHAR) COLLATE utf8mb4_general_ci as status, 
+          CAST(s_link.id AS UNSIGNED) as sector_id
+        FROM ipo_lists i
+        JOIN sectors s_link ON i.sector_id = s_link.id
+        LEFT JOIN ipo_sector_links isl ON i.id = isl.ipo_id
+        WHERE isl.ipo_id IS NULL
+
+        UNION ALL
+
+        SELECT 
+          CAST(i.id AS UNSIGNED) as id, 
+          CAST(i.type AS CHAR) COLLATE utf8mb4_general_ci as issue_category, 
+          CAST(i.status AS CHAR) COLLATE utf8mb4_general_ci as status, 
+          CAST(i.sector_id AS UNSIGNED) as sector_id
+        FROM sector_by_ipo i
+        WHERE NOT EXISTS (
+          SELECT 1 FROM ipo_lists il 
+          WHERE (LOWER(TRIM(il.issuer_company)) COLLATE utf8mb4_general_ci) = (LOWER(TRIM(i.name)) COLLATE utf8mb4_general_ci)
+        )
+      ) i ON s.id = i.sector_id AND i.status = 'Active'
     `;
 
     const whereClause = [];

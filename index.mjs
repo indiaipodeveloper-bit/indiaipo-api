@@ -804,10 +804,22 @@ async function initDB() {
                 confidential VARCHAR(10) DEFAULT '0',
                 upcoming_ipo_status VARCHAR(255),
                 admin_blog_id INT,
+                listing_day_gain_percentage VARCHAR(255) DEFAULT NULL,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
             )
         `);
+
+        // Migration: Add listing_day_gain_percentage to ipo_lists if it doesn't exist
+        try {
+            await conn.execute(`ALTER TABLE ipo_lists ADD COLUMN listing_day_gain_percentage VARCHAR(255) DEFAULT NULL`);
+            console.log('✅ Added listing_day_gain_percentage to ipo_lists');
+        } catch (err) {
+            // Suppress error if column already exists, but modify its type just in case
+            try {
+                await conn.execute(`ALTER TABLE ipo_lists MODIFY COLUMN listing_day_gain_percentage VARCHAR(255) DEFAULT NULL`);
+            } catch (err2) { }
+        }
 
         await conn.execute(`
             CREATE TABLE IF NOT EXISTS ipo_sector_links (

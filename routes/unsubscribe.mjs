@@ -22,7 +22,7 @@ router.get('/', async (req, res) => {
             [email]
         );
 
-        const siteUrl = process.env.SITE_URL || 'https://www.indiaipo.in';
+        const siteUrl = `https://www.indiaipo.in`;
 
         return res.send(`
       <!DOCTYPE html>

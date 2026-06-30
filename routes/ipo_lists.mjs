@@ -122,7 +122,7 @@ router.get("/", async (req, res) => {
 
       const processedData = data.map(item => {
         const processed = { ...item };
-        const excludeFromZero = ['logo', 'blog_image', 'blog_slug', 'sector_name', 'sector_names', 'issuer_company', 'status', 'issue_category', 'date_declared', 'open_date', 'close_date', 'listing_date', 'merchant_bankers', 'exchange', 'ipo_subscription', 'listing_day_gain_percentage'];
+        const excludeFromZero = ['logo', 'blog_image', 'blog_slug', 'sector_name', 'sector_names', 'issuer_company', 'status', 'issue_category', 'date_declared', 'open_date', 'close_date', 'listing_date', 'merchant_bankers', 'exchange', 'ipo_subscription', 'listing_day_gain_percentage', 'listing_price'];
 
         Object.keys(processed).forEach(key => {
           if (processed[key] === null && !excludeFromZero.includes(key)) {
@@ -305,7 +305,7 @@ router.get("/", async (req, res) => {
     // Map nulls (only for numeric indicators, keep paths/slugs as null or empty)
     const processedData = data.map(item => {
       const processed = { ...item };
-      const excludeFromZero = ['logo', 'blog_image', 'blog_slug', 'sector_name', 'sector_names', 'issuer_company', 'status', 'issue_category', 'date_declared', 'open_date', 'close_date', 'listing_date', 'merchant_bankers', 'exchange', 'ipo_subscription', 'listing_day_gain_percentage'];
+      const excludeFromZero = ['logo', 'blog_image', 'blog_slug', 'sector_name', 'sector_names', 'issuer_company', 'status', 'issue_category', 'date_declared', 'open_date', 'close_date', 'listing_date', 'merchant_bankers', 'exchange', 'ipo_subscription', 'listing_day_gain_percentage', 'listing_price'];
 
       Object.keys(processed).forEach(key => {
         if (processed[key] === null && !excludeFromZero.includes(key)) {
@@ -349,7 +349,7 @@ router.get("/:id", async (req, res) => {
     }
 
     const item = data[0];
-    const excludeFromZero = ['logo', 'blog_image', 'blog_slug', 'sector_name', 'sector_names', 'issuer_company', 'status', 'issue_category', 'date_declared', 'open_date', 'close_date', 'listing_date', 'merchant_bankers', 'exchange', 'ipo_subscription', 'listing_day_gain_percentage'];
+    const excludeFromZero = ['logo', 'blog_image', 'blog_slug', 'sector_name', 'sector_names', 'issuer_company', 'status', 'issue_category', 'date_declared', 'open_date', 'close_date', 'listing_date', 'merchant_bankers', 'exchange', 'ipo_subscription', 'listing_day_gain_percentage', 'listing_price'];
     Object.keys(item).forEach(key => {
       if (item[key] === null && !excludeFromZero.includes(key)) item[key] = 0;
     });
@@ -370,7 +370,7 @@ router.post("/", async (req, res) => {
       issue_size, lot_size, exchange, gmp, issue_category, sector_id,
       merchant_banker, current_price, ipo_pe_ratio, listing_day_close_bse,
       listing_day_close_nse, listing_day_open_bse, listing_day_open_nse, status, upcoming, confidential,
-      upcoming_ipo_status, admin_blog_id, sector_ids, listing_day_gain_percentage
+      upcoming_ipo_status, admin_blog_id, sector_ids, listing_day_gain_percentage, listing_price
     } = req.body;
 
     // Resolve merchant_bankers names from merchant_banker IDs
@@ -504,6 +504,7 @@ router.post("/", async (req, res) => {
     }
 
     let listing_day_gain_percentage_parsed = (listing_day_gain_percentage !== undefined && listing_day_gain_percentage !== null && listing_day_gain_percentage !== '') ? String(listing_day_gain_percentage).trim() : null;
+    let listing_price_parsed = (listing_price !== undefined && listing_price !== null && listing_price !== '') ? String(listing_price).trim() : null;
 
     const fields = [
       'logo', 'issuer_company', 'date_declared', 'open_date', 'close_date',
@@ -511,7 +512,7 @@ router.post("/", async (req, res) => {
       'issue_size', 'lot_size', 'exchange', 'gmp', 'issue_category', 'sector_id',
       'merchant_banker', 'current_price', 'ipo_pe_ratio', 'listing_day_close_bse',
       'listing_day_close_nse', 'listing_day_open_bse', 'listing_day_open_nse', 'status', 'upcoming', 'confidential',
-      'upcoming_ipo_status', 'admin_blog_id', 'listing_day_gain_percentage'
+      'upcoming_ipo_status', 'admin_blog_id', 'listing_day_gain_percentage', 'listing_price'
     ];
 
     const values = [
@@ -542,7 +543,8 @@ router.post("/", async (req, res) => {
       confidential || '0',
       upcoming_ipo_status || null,
       admin_blog_id || null,
-      listing_day_gain_percentage_parsed
+      listing_day_gain_percentage_parsed,
+      listing_price_parsed
     ];
 
     const placeholders = fields.map(() => "?").join(", ");
@@ -582,7 +584,7 @@ router.put("/:id", async (req, res) => {
       issue_size, lot_size, exchange, gmp, issue_category, sector_id,
       merchant_banker, current_price, ipo_pe_ratio, listing_day_close_bse,
       listing_day_close_nse, listing_day_open_bse, listing_day_open_nse, status, upcoming, confidential,
-      upcoming_ipo_status, admin_blog_id, sector_ids, listing_day_gain_percentage
+      upcoming_ipo_status, admin_blog_id, sector_ids, listing_day_gain_percentage, listing_price
     } = req.body;
 
     // Resolve merchant_bankers names from merchant_banker IDs
@@ -765,6 +767,7 @@ router.put("/:id", async (req, res) => {
     // =========================
 
     let listing_day_gain_percentage_parsed = (listing_day_gain_percentage !== undefined && listing_day_gain_percentage !== null && listing_day_gain_percentage !== '') ? String(listing_day_gain_percentage).trim() : null;
+    let listing_price_parsed = (listing_price !== undefined && listing_price !== null && listing_price !== '') ? String(listing_price).trim() : null;
 
     const finalData = {
       logo,
@@ -794,7 +797,8 @@ router.put("/:id", async (req, res) => {
       confidential: confidential || "0",
       upcoming_ipo_status: upcoming_ipo_status || null,
       admin_blog_id: admin_blog_id || null,
-      listing_day_gain_percentage: listing_day_gain_percentage_parsed
+      listing_day_gain_percentage: listing_day_gain_percentage_parsed,
+      listing_price: listing_price_parsed
     };
 
     const fieldsToUpdate = Object.keys(finalData);

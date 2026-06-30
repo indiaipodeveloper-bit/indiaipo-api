@@ -122,7 +122,7 @@ router.get("/", async (req, res) => {
 
       const processedData = data.map(item => {
         const processed = { ...item };
-        const excludeFromZero = ['logo', 'blog_image', 'blog_slug', 'sector_name', 'sector_names', 'issuer_company', 'status', 'issue_category', 'date_declared', 'open_date', 'close_date', 'listing_date', 'merchant_bankers', 'exchange', 'ipo_subscription'];
+        const excludeFromZero = ['logo', 'blog_image', 'blog_slug', 'sector_name', 'sector_names', 'issuer_company', 'status', 'issue_category', 'date_declared', 'open_date', 'close_date', 'listing_date', 'merchant_bankers', 'exchange', 'ipo_subscription', 'listing_day_gain_percentage'];
 
         Object.keys(processed).forEach(key => {
           if (processed[key] === null && !excludeFromZero.includes(key)) {
@@ -305,7 +305,7 @@ router.get("/", async (req, res) => {
     // Map nulls (only for numeric indicators, keep paths/slugs as null or empty)
     const processedData = data.map(item => {
       const processed = { ...item };
-      const excludeFromZero = ['logo', 'blog_image', 'blog_slug', 'sector_name', 'sector_names', 'issuer_company', 'status', 'issue_category', 'date_declared', 'open_date', 'close_date', 'listing_date', 'merchant_bankers', 'exchange', 'ipo_subscription'];
+      const excludeFromZero = ['logo', 'blog_image', 'blog_slug', 'sector_name', 'sector_names', 'issuer_company', 'status', 'issue_category', 'date_declared', 'open_date', 'close_date', 'listing_date', 'merchant_bankers', 'exchange', 'ipo_subscription', 'listing_day_gain_percentage'];
 
       Object.keys(processed).forEach(key => {
         if (processed[key] === null && !excludeFromZero.includes(key)) {
@@ -349,8 +349,9 @@ router.get("/:id", async (req, res) => {
     }
 
     const item = data[0];
+    const excludeFromZero = ['logo', 'blog_image', 'blog_slug', 'sector_name', 'sector_names', 'issuer_company', 'status', 'issue_category', 'date_declared', 'open_date', 'close_date', 'listing_date', 'merchant_bankers', 'exchange', 'ipo_subscription', 'listing_day_gain_percentage'];
     Object.keys(item).forEach(key => {
-      if (item[key] === null) item[key] = 0;
+      if (item[key] === null && !excludeFromZero.includes(key)) item[key] = 0;
     });
 
     res.json(item);
@@ -369,7 +370,7 @@ router.post("/", async (req, res) => {
       issue_size, lot_size, exchange, gmp, issue_category, sector_id,
       merchant_banker, current_price, ipo_pe_ratio, listing_day_close_bse,
       listing_day_close_nse, listing_day_open_bse, listing_day_open_nse, status, upcoming, confidential,
-      upcoming_ipo_status, admin_blog_id, sector_ids
+      upcoming_ipo_status, admin_blog_id, sector_ids, listing_day_gain_percentage
     } = req.body;
 
     // Resolve merchant_bankers names from merchant_banker IDs
@@ -502,13 +503,15 @@ router.post("/", async (req, res) => {
       return res.status(400).json({ error: "Sector is required" });
     }
 
+    let listing_day_gain_percentage_parsed = (listing_day_gain_percentage !== undefined && listing_day_gain_percentage !== null && listing_day_gain_percentage !== '') ? String(listing_day_gain_percentage).trim() : null;
+
     const fields = [
       'logo', 'issuer_company', 'date_declared', 'open_date', 'close_date',
       'listing_date', 'merchant_bankers', 'issue_lowest_price', 'issue_highest_price',
       'issue_size', 'lot_size', 'exchange', 'gmp', 'issue_category', 'sector_id',
       'merchant_banker', 'current_price', 'ipo_pe_ratio', 'listing_day_close_bse',
       'listing_day_close_nse', 'listing_day_open_bse', 'listing_day_open_nse', 'status', 'upcoming', 'confidential',
-      'upcoming_ipo_status', 'admin_blog_id'
+      'upcoming_ipo_status', 'admin_blog_id', 'listing_day_gain_percentage'
     ];
 
     const values = [
@@ -538,7 +541,8 @@ router.post("/", async (req, res) => {
       upcoming || '0',
       confidential || '0',
       upcoming_ipo_status || null,
-      admin_blog_id || null
+      admin_blog_id || null,
+      listing_day_gain_percentage_parsed
     ];
 
     const placeholders = fields.map(() => "?").join(", ");
@@ -578,7 +582,7 @@ router.put("/:id", async (req, res) => {
       issue_size, lot_size, exchange, gmp, issue_category, sector_id,
       merchant_banker, current_price, ipo_pe_ratio, listing_day_close_bse,
       listing_day_close_nse, listing_day_open_bse, listing_day_open_nse, status, upcoming, confidential,
-      upcoming_ipo_status, admin_blog_id, sector_ids
+      upcoming_ipo_status, admin_blog_id, sector_ids, listing_day_gain_percentage
     } = req.body;
 
     // Resolve merchant_bankers names from merchant_banker IDs
@@ -760,6 +764,8 @@ router.put("/:id", async (req, res) => {
     // ✅ UPDATE QUERY
     // =========================
 
+    let listing_day_gain_percentage_parsed = (listing_day_gain_percentage !== undefined && listing_day_gain_percentage !== null && listing_day_gain_percentage !== '') ? String(listing_day_gain_percentage).trim() : null;
+
     const finalData = {
       logo,
       issuer_company,
@@ -787,7 +793,8 @@ router.put("/:id", async (req, res) => {
       upcoming: upcoming || "0",
       confidential: confidential || "0",
       upcoming_ipo_status: upcoming_ipo_status || null,
-      admin_blog_id: admin_blog_id || null
+      admin_blog_id: admin_blog_id || null,
+      listing_day_gain_percentage: listing_day_gain_percentage_parsed
     };
 
     const fieldsToUpdate = Object.keys(finalData);

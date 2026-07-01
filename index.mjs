@@ -54,6 +54,7 @@ import uploadDailyReporterRoutes
 import uploadWeeklyReporterRoutes
     from './routes/uploadWeeklyReporter.mjs';
 import weeklyDigestRoutes from './routes/weekly_digests.mjs';
+import smeMigrationRoutes from './routes/sme_migrations.mjs';
 
 // Workers
 import { processJobs } from './worker/sendDailyDigestWorker.mjs';
@@ -1110,6 +1111,23 @@ async function initDB() {
             )
         `);
 
+        await conn.execute(`
+            CREATE TABLE IF NOT EXISTS sme_migrations (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                exchange_type VARCHAR(20) NOT NULL,
+                sno VARCHAR(50),
+                company_name VARCHAR(255) NOT NULL,
+                ipo_date VARCHAR(100),
+                exchanges VARCHAR(255),
+                merchant_banker VARCHAR(255),
+                ipo_size VARCHAR(100),
+                migration_date VARCHAR(100),
+                issue_price VARCHAR(100),
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+            )
+        `);
+
         conn.release();
         console.log('✅ All MySQL tables initialized (including IPO lists, Admin Blogs, News, etc)');
 
@@ -1310,6 +1328,7 @@ app.use('/api/seo-pages', seoPagesRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/users', usersRoutes);
 app.use('/api/annual-report-requests', annualReportRequestRoutes);
+app.use('/api/sme-migrations', smeMigrationRoutes);
 app.use(
     '/api/upload/magazine',
     uploadMagazineRoutes

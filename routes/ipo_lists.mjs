@@ -394,7 +394,12 @@ router.get("/sectors/list", async (req, res) => {
 // GET single IPO by ID
 router.get("/:id", async (req, res) => {
   try {
-    const [data] = await pool.query("SELECT * FROM ipo_lists WHERE id = ?", [req.params.id]);
+    const [data] = await pool.query(`
+      SELECT i.*, b.ipo_subscription AS ipo_subscription
+      FROM ipo_lists i
+      LEFT JOIN admin_blogs b ON i.admin_blog_id = b.id
+      WHERE i.id = ?
+    `, [req.params.id]);
     if (data.length === 0) {
       return res.status(404).json({ error: "IPO not found" });
     }

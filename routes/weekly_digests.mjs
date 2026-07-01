@@ -8,19 +8,30 @@ router.get('/', async (req, res) => {
     try {
         const page = parseInt(req.query.page) || 1;
         const limit = parseInt(req.query.limit) || 10;
-        const search = req.query.search || '';
+        const { search="", type="" } = req.query;
         const offset = (page - 1) * limit;
 
         let query = 'SELECT * FROM weekly_digests';
         let countQuery = 'SELECT COUNT(*) as total FROM weekly_digests';
+        const where = [];
         const params = [];
         const countParams = [];
 
         if (search.trim()) {
-            query += ' WHERE title LIKE ?';
-            countQuery += ' WHERE title LIKE ?';
+            where.push("title LIKE ?");
             params.push(`%${search}%`);
             countParams.push(`%${search}%`);
+        }
+
+        if (type.trim()) {
+            where.push("type = ?");
+            params.push(type);
+            countParams.push(type);
+        }
+        if(where.length > 0){
+            const whereClause = ' WHERE ' + where.join(' AND ');
+            query += whereClause;
+            countQuery += whereClause;
         }
 
         query += ' ORDER BY created_at DESC LIMIT ? OFFSET ?';

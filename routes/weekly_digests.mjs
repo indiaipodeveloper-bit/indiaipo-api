@@ -65,13 +65,13 @@ router.get('/:id', async (req, res) => {
 // Create weekly digest
 router.post('/', async (req, res) => {
     try {
-        const { title, image, pdf } = req.body;
+        const { title, image, pdf, type } = req.body;
 
         const [result] = await pool.query(
             `INSERT INTO weekly_digests 
-            (title, image, pdf, created_at, updated_at) 
-            VALUES (?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)`,
-            [title, image, pdf]
+            (title, image, pdf, type, created_at, updated_at) 
+            VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)`,
+            [title, image, pdf, type]
         );
 
         const digestId = result.insertId;
@@ -92,7 +92,7 @@ router.post('/', async (req, res) => {
 router.put('/:id', async (req, res) => {
     try {
         const { id } = req.params;
-        const { title, image, pdf } = req.body;
+        const { title, image, pdf, type } = req.body;
 
         let query = 'UPDATE weekly_digests SET updated_at = CURRENT_TIMESTAMP';
         const params = [];
@@ -109,7 +109,10 @@ router.put('/:id', async (req, res) => {
             query += ', pdf = ?';
             params.push(pdf);
         }
-
+        if (type !== undefined) {
+            query += ', type = ?';
+            params.push(type);
+        }
         query += ' WHERE id = ?';
         params.push(id);
 
